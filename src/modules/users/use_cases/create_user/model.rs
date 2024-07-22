@@ -1,12 +1,12 @@
 use chrono::{DateTime, Local};
 use ulid::Ulid;
 
-use crate::modules::users::repository::UserRepository;
-use crate::modules::users::use_cases::create_user::view;
+use crate::modules::users::{repository::UsersRepository, use_cases::create_user::view};
+use crate::shared::common::errors::CommonErrors;
 use crate::shared::infrastructure::database::repository::Repository;
+use crate::shared::infrastructure::database as db;
 
 pub struct UserModel {
-    pub id: String,
     pub email: String,
     pub username: String,
     pub first_name: String,
@@ -16,10 +16,9 @@ pub struct UserModel {
     pub updated_at: DateTime<Local>,
 }
 
-pub fn create(payload: view::UserCreateRequestBody) -> view::UserCreatedResponse {
+pub fn create(payload: view::UserCreateRequestBody) -> Result<view::UserCreatedResponse, CommonErrors> {
     let now = Local::now();
     let user = UserModel {
-        id: Ulid::new().to_string(),
         email: payload.email.to_string(),
         username: payload.username.to_string(),
         first_name: payload.first_name.to_string(),
@@ -29,9 +28,14 @@ pub fn create(payload: view::UserCreateRequestBody) -> view::UserCreatedResponse
         updated_at: now,
     };
 
-    UserRepository::create(&user).expect("TODO: panic message");
-
-    view::UserCreatedResponse {
-        id: user.id
+    let repository = UsersRepository::new(db::connection::get_connection());
+    println!("@here");
+    match repository.create(&user) {
+        Ok(_) => Ok(view::UserCreatedResponse { id: 1 }),
+        Err(e) => {
+            println!("{:?}", e);
+            Err(CommonErrors::UnexpectedServerError)
+        },
+        _ => Err(CommonErrors::UnexpectedServerError)
     }
 }

@@ -9,6 +9,8 @@ mod shared;
 async fn main() {
     tracing_subscriber::registry().with(tracing_subscriber::fmt::layer()).init();
 
+    shared::infrastructure::database::init::initialize_database();
+
     let app = shared::infrastructure::api::init::initialize_app();
 
     // Webserver

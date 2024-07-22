@@ -1,12 +1,19 @@
 use axum::{Json, response::IntoResponse};
 use http::StatusCode;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::modules::users::use_cases::create_user::controller;
-use crate::shared::infrastructure::utils::api_response;
-use crate::shared::infrastructure::utils::api_response::ApiResponse;
+use crate::shared::common::errors::CommonErrors;
 
-#[derive(Deserialize)]
+#[derive(Debug, Serialize)]
+pub struct ApiResponse<T, E> {
+    pub data: Option<T>,
+    pub error: Option<E>,
+    pub success: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserCreateRequestBody {
     pub email: String,
     pub username: String,
@@ -14,19 +21,36 @@ pub struct UserCreateRequestBody {
     pub last_name: String,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct UserCreatedResponse {
-    pub id: String,
+    pub id: i32,
 }
 
-pub async fn post_create_user(Json(payload): Json<UserCreateRequestBody>) -> impl IntoResponse {
-    let user_created = controller::handle(payload);
-    api_response::build(
-        ApiResponse {
-            success: true,
-            data: Some(user_created),
-            error: None::<()>,
-        },
-        StatusCode::CREATED
-    )
+pub async fn post_create_user(Json(payload): Json<Value>) -> impl IntoResponse {
+    match controller::handle(payload) {
+        Ok(user) => {
+            let response = ApiResponse {
+                data: Some(UserCreatedResponse { id: user.id }),
+                error: None::<CommonErrors>,
+                success: true,
+            };
+            (StatusCode::CREATED, Json(response))
+        }
+        Err(CommonErrors::ValidationError) => {
+            let response = ApiResponse {
+                data: None::<UserCreatedResponse>,
+                error: Some(CommonErrors::ValidationError),
+                success: false,
+            };
+            (StatusCode::CONFLICT, Json(response))
+        }
+        _ => {
+            let response = ApiResponse {
+                data: None::<UserCreatedResponse>,
+                error: Some(CommonErrors::UnexpectedServerError),
+                success: false,
+            };
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
+        }
+    }
 }

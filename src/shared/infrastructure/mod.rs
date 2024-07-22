@@ -13,7 +13,3 @@ pub mod database {
 pub mod api {
     pub mod init;
 }
-
-pub mod utils {
-    pub mod api_response;
-}

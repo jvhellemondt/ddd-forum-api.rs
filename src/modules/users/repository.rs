@@ -1,20 +1,26 @@
-use rusqlite::{params, Result};
-use crate::modules::users::use_cases::create_user::model::UserModel;
+use std::sync::Mutex;
 
-use crate::shared::infrastructure::database as db;
+use rusqlite::{Connection, params};
+
+use crate::modules::users::use_cases::create_user::model::UserModel;
 use crate::shared::infrastructure::database::repository::Repository;
 
-pub struct UserRepository {}
+pub struct UsersRepository {
+    connection: &'static Mutex<Connection>,
+}
 
-impl Repository<UserModel> for UserRepository {
-    fn create(user: &UserModel) -> Result<()> {
-        let connection = db::connection::get_connection();
-        let connection_lock = connection.lock().expect("Failed to lock the connection");
+impl UsersRepository {
+    pub fn new(connection: &'static Mutex<Connection>) -> Self {
+        UsersRepository { connection }
+    }
+}
 
-        connection_lock.execute(
-            "INSERT INTO users (id, email, username, first_name, last_name, password, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+impl Repository<UserModel, rusqlite::Error> for UsersRepository {
+    fn create(&self, user: &UserModel) -> Result<(), rusqlite::Error> {
+        let conn = self.connection.lock().expect("Failed to lock the connection");
+        match conn.execute(
+            "INSERT INTO users (email, username, first_name, last_name, password, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![
-                    user.id,
                     user.email,
                     user.username,
                     user.first_name,
@@ -23,8 +29,10 @@ impl Repository<UserModel> for UserRepository {
                     user.created_at.to_rfc3339(),
                     user.updated_at.to_rfc3339()
                 ],
-        )?;
-        Ok(())
+        ) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err),
+        }
     }
 
     // fn read(&self, id: &str) -> Result<User, ()> {
