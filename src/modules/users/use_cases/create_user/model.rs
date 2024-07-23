@@ -3,8 +3,8 @@ use ulid::Ulid;
 
 use crate::modules::users::{repository::UsersRepository, use_cases::create_user::view};
 use crate::shared::common::errors::CommonErrors;
-use crate::shared::infrastructure::database::repository::Repository;
 use crate::shared::infrastructure::database as db;
+use crate::shared::infrastructure::database::repository::Repository;
 
 pub struct UserModel {
     pub email: String,
@@ -16,7 +16,9 @@ pub struct UserModel {
     pub updated_at: DateTime<Local>,
 }
 
-pub fn create(payload: view::UserCreateRequestBody) -> Result<view::UserCreatedResponse, CommonErrors> {
+pub fn create(
+    payload: view::UserCreateRequestBody,
+) -> Result<view::UserCreatedResponse, CommonErrors> {
     let now = Local::now();
     let user = UserModel {
         email: payload.email.to_string(),
@@ -35,7 +37,7 @@ pub fn create(payload: view::UserCreateRequestBody) -> Result<view::UserCreatedR
         Err(e) => {
             println!("{:?}", e);
             Err(CommonErrors::UnexpectedServerError)
-        },
-        _ => Err(CommonErrors::UnexpectedServerError)
+        }
+        _ => Err(CommonErrors::UnexpectedServerError),
     }
 }

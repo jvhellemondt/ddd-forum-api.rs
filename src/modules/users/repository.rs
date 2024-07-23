@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use rusqlite::{Connection, params};
+use rusqlite::{params, Connection};
 
 use crate::modules::users::use_cases::create_user::model::UserModel;
 use crate::shared::infrastructure::database::repository::Repository;
@@ -17,7 +17,10 @@ impl UsersRepository {
 
 impl Repository<UserModel, rusqlite::Error> for UsersRepository {
     fn create(&self, user: &UserModel) -> Result<i64, rusqlite::Error> {
-        let conn = self.connection.lock().expect("Failed to lock the connection");
+        let conn = self
+            .connection
+            .lock()
+            .expect("Failed to lock the connection");
         match conn.execute(
             "INSERT INTO users (email, username, first_name, last_name, password, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![

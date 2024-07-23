@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use serde_json::Value;
+use std::collections::HashMap;
 
 pub fn convert(value: Value) -> HashMap<String, Value> {
     match value {
