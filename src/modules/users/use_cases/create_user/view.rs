@@ -23,7 +23,7 @@ pub struct UserCreateRequestBody {
 
 #[derive(Debug, Serialize)]
 pub struct UserCreatedResponse {
-    pub id: i32,
+    pub id: i64,
 }
 
 pub async fn post_create_user(Json(payload): Json<Value>) -> impl IntoResponse {

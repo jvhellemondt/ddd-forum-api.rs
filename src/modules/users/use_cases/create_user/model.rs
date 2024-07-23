@@ -31,7 +31,7 @@ pub fn create(payload: view::UserCreateRequestBody) -> Result<view::UserCreatedR
     let repository = UsersRepository::new(db::connection::get_connection());
     println!("@here");
     match repository.create(&user) {
-        Ok(_) => Ok(view::UserCreatedResponse { id: 1 }),
+        Ok(id) => Ok(view::UserCreatedResponse { id }),
         Err(e) => {
             println!("{:?}", e);
             Err(CommonErrors::UnexpectedServerError)

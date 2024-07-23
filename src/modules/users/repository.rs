@@ -16,7 +16,7 @@ impl UsersRepository {
 }
 
 impl Repository<UserModel, rusqlite::Error> for UsersRepository {
-    fn create(&self, user: &UserModel) -> Result<(), rusqlite::Error> {
+    fn create(&self, user: &UserModel) -> Result<i64, rusqlite::Error> {
         let conn = self.connection.lock().expect("Failed to lock the connection");
         match conn.execute(
             "INSERT INTO users (email, username, first_name, last_name, password, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
@@ -30,7 +30,7 @@ impl Repository<UserModel, rusqlite::Error> for UsersRepository {
                     user.updated_at.to_rfc3339()
                 ],
         ) {
-            Ok(_) => Ok(()),
+            Ok(_) => Ok(conn.last_insert_rowid()),
             Err(err) => Err(err),
         }
     }
