@@ -35,7 +35,7 @@ pub fn handle(payload: Value) -> Result<UserCreatedResponse, CommonErrors> {
         return Err(CommonErrors::ValidationError);
     }
     let user_create_request: UserCreateRequestBody =
-        serde_json::from_value(payload).map_err(|e| CommonErrors::ValidationError)?;
+        serde_json::from_value(payload).map_err(|_e| CommonErrors::ValidationError)?;
 
     match create_user::model::create(user_create_request) {
         Ok(user) => Ok(user),

@@ -31,6 +31,7 @@ pub fn create(
     };
 
     let repository = UsersRepository::new(db::connection::get_connection());
+
     println!("@here");
     match repository.create(&user) {
         Ok(id) => Ok(view::UserCreatedResponse { id }),
@@ -38,6 +39,5 @@ pub fn create(
             println!("{:?}", e);
             Err(CommonErrors::UnexpectedServerError)
         }
-        _ => Err(CommonErrors::UnexpectedServerError),
     }
 }

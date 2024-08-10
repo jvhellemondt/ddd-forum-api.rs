@@ -5,7 +5,6 @@ pub mod common {
 
 pub mod utils {
     pub mod conversion {
-        pub mod struct_to_hashmap;
         pub mod value_to_hashmap;
     }
 
