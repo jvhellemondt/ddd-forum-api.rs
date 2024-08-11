@@ -2,8 +2,8 @@ use chrono::Local;
 use ulid::Ulid;
 
 use crate::modules::users::{repository::UsersRepository, use_cases::create_user::view};
-use crate::modules::users::errors::UsersErrors::{EmailAlreadyInUse, UsernameAlreadyTaken};
-use crate::modules::users::use_cases::create_user::errors::CreateUserErrors::{self, CommonError, UsersError};
+use crate::modules::users::errors::UsersDomainErrors::{EmailAlreadyInUse, UsernameAlreadyTaken};
+use crate::modules::users::errors::UsersErrors::{self, CommonError, DomainError};
 use crate::shared::common::errors::CommonErrors::UnexpectedServerError;
 use crate::shared::infrastructure::database as db;
 use crate::shared::infrastructure::database::repository::Repository;
@@ -22,7 +22,7 @@ pub struct UserModel {
 
 pub fn create(
     payload: view::UserCreateRequestBody,
-) -> Result<i64, CreateUserErrors> {
+) -> Result<i64, UsersErrors> {
     let now = Local::now();
     let user = UserModel {
         id: None,
@@ -38,11 +38,11 @@ pub fn create(
     let repository = UsersRepository::new(db::connection::get_connection());
 
     if let Ok(Some(_)) = repository.get_by("email", &user.email) {
-        return Err(UsersError(EmailAlreadyInUse));
+        return Err(DomainError(EmailAlreadyInUse));
     }
 
     if let Ok(Some(_)) = repository.get_by("username", &user.username) {
-        return Err(UsersError(UsernameAlreadyTaken));
+        return Err(DomainError(UsernameAlreadyTaken));
     }
 
     repository.create(&user).map_err(|_e| CommonError(UnexpectedServerError))

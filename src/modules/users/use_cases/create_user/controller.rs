@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use serde_json::Value;
 
 use crate::modules::users::use_cases::create_user;
-use crate::modules::users::use_cases::create_user::errors::CreateUserErrors;
-use crate::modules::users::use_cases::create_user::errors::CreateUserErrors::CommonError;
+use crate::modules::users::errors::UsersErrors::{self, CommonError};
 use crate::modules::users::use_cases::create_user::view::UserCreateRequestBody;
 use crate::shared::common::errors::CommonErrors::ValidationError;
 use crate::shared::utils::conversion::value_to_hashmap;
@@ -27,10 +26,10 @@ fn is_user_insert_valid(input: &Value) -> bool {
     has_every_insert_user_field(&value_map) && has_only_insert_user_fields(&value_map)
 }
 
-pub async fn handle(payload: Value) -> Result<i64, CreateUserErrors> {
+pub async fn handle(payload: Value) -> Result<i64, UsersErrors> {
     if !is_user_insert_valid(&payload) {
         return Err(CommonError(ValidationError));
     }
-    let user_create_request: UserCreateRequestBody = serde_json::from_value(payload).map_err(|_e| ValidationError)?;
+    let user_create_request: UserCreateRequestBody = serde_json::from_value(payload).map_err(|_e| CommonError(ValidationError))?;
     create_user::model::create(user_create_request)
 }
