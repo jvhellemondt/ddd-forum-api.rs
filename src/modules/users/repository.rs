@@ -1,8 +1,8 @@
 use std::sync::Mutex;
 
 use rusqlite::{Connection, named_params};
+use crate::modules::users::domain::user::UserModel;
 
-use crate::modules::users::use_cases::create_user::model::UserModel;
 use crate::shared::infrastructure::database::repository::Repository;
 
 pub struct UsersRepository {

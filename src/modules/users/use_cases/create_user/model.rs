@@ -2,23 +2,12 @@ use chrono::Local;
 use ulid::Ulid;
 
 use crate::modules::users::{repository::UsersRepository, use_cases::create_user::view};
+use crate::modules::users::domain::user::UserModel;
 use crate::modules::users::errors::UsersDomainErrors::{EmailAlreadyInUse, UsernameAlreadyTaken};
 use crate::modules::users::errors::UsersErrors::{self, CommonError, DomainError};
 use crate::shared::common::errors::CommonErrors::UnexpectedServerError;
 use crate::shared::infrastructure::database as db;
 use crate::shared::infrastructure::database::repository::Repository;
-
-#[derive(Debug)]
-pub struct UserModel {
-    pub id: Option<i64>,
-    pub email: String,
-    pub username: String,
-    pub first_name: String,
-    pub last_name: String,
-    pub password: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
-}
 
 pub fn create(
     payload: view::UserCreateRequestBody,
