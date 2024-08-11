@@ -7,7 +7,10 @@ pub mod use_cases {
         pub mod controller;
         pub mod model;
         pub mod view;
-        pub mod errors;
+    }
+
+    pub mod get_user_by_email {
+        pub mod view;
     }
 }
 

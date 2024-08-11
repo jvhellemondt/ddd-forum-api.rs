@@ -7,6 +7,7 @@ pub struct UserModel {
     pub username: String,
     pub first_name: String,
     pub last_name: String,
+    #[serde(skip_serializing)]
     pub password: Option<String>,
     pub created_at: String,
     pub updated_at: String,
