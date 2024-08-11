@@ -10,6 +10,8 @@ pub mod use_cases {
     }
 
     pub mod get_user_by_email {
+        pub mod controller;
+        pub mod model;
         pub mod view;
     }
 }
