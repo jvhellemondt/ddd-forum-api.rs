@@ -2,7 +2,7 @@ use crate::shared::infrastructure::database as db;
 
 const CREATE_USERS_TABLE_QUERY: &str = "
     CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT NOT NULL UNIQUE,
         username TEXT NOT NULL UNIQUE,
         first_name TEXT NOT NULL,

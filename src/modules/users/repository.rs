@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, named_params};
 
 use crate::modules::users::use_cases::create_user::model::UserModel;
 use crate::shared::infrastructure::database::repository::Repository;
@@ -17,27 +17,59 @@ impl UsersRepository {
 
 impl Repository<UserModel, rusqlite::Error> for UsersRepository {
     fn create(&self, user: &UserModel) -> Result<i64, rusqlite::Error> {
-        let conn = self
-            .connection
-            .lock()
-            .expect("Failed to lock the connection");
+        let conn = self.connection.lock().expect("Failed to lock the connection");
         match conn.execute(
-            "INSERT INTO users (email, username, first_name, last_name, password, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-            params![
-                    user.email,
-                    user.username,
-                    user.first_name,
-                    user.last_name,
-                    user.password,
-                    user.created_at.to_rfc3339(),
-                    user.updated_at.to_rfc3339()
-                ],
+            "INSERT INTO users (\
+                        email, username, first_name, last_name, password, created_at, updated_at\
+                    ) VALUES (\
+                        :email, :username, :first_name, :last_name, :password, :created_at, :updated_at\
+                    )",
+            named_params! {
+                    ":email": user.email,
+                    ":username": user.username,
+                    ":first_name": user.first_name,
+                    ":last_name": user.last_name,
+                    ":password": user.password,
+                    ":created_at": user.created_at,
+                    ":updated_at": user.updated_at
+                },
         ) {
             Ok(_) => Ok(conn.last_insert_rowid()),
             Err(err) => Err(err),
         }
     }
 
+    fn get_by(&self, key: &str, value: &str) -> Result<Option<UserModel>, rusqlite::Error> {
+        let conn = self.connection.lock().expect("Failed to lock the connection");
+
+        let query = format!(
+            "SELECT id, email, username, first_name, last_name, created_at, updated_at \
+            FROM users \
+            WHERE {} = :value",
+            key
+        );
+
+        let mut stmt = conn.prepare(&query)?;
+
+        let mut rows = stmt.query(named_params! { ":value": value })?;
+
+        if let Some(row) = rows.next()? {
+            let user = UserModel {
+                id: row.get(0)?,
+                email: row.get(1)?,
+                username: row.get(2)?,
+                first_name: row.get(3)?,
+                last_name: row.get(4)?,
+                password: None,
+                created_at: row.get(5)?,
+                updated_at: row.get(6)?,
+            };
+            return Ok(Some(user));
+        }
+        Ok(None)
+    }
+
+    //
     // fn read(&self, id: &str) -> Result<User, ()> {
     //     let conn = self.connection.lock().expect("Failed to lock the connection");
     //

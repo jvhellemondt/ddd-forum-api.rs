@@ -1,17 +1,13 @@
-use axum::{response::IntoResponse, Json};
+use axum::{Json, response::IntoResponse};
 use http::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::modules::users::errors::UsersErrors;
 use crate::modules::users::use_cases::create_user::controller;
+use crate::modules::users::use_cases::create_user::errors::CreateUserErrors;
 use crate::shared::common::errors::CommonErrors;
-
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T, E> {
-    pub data: Option<T>,
-    pub error: Option<E>,
-    pub success: bool,
-}
+use crate::shared::infrastructure::utils::response::build_response;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserCreateRequestBody {
@@ -21,36 +17,42 @@ pub struct UserCreateRequestBody {
     pub last_name: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct UserCreatedResponse {
     pub id: i64,
 }
 
 pub async fn post_create_user(Json(payload): Json<Value>) -> impl IntoResponse {
-    match controller::handle(payload) {
-        Ok(user) => {
-            let response = ApiResponse {
-                data: Some(UserCreatedResponse { id: user.id }),
-                error: None::<CommonErrors>,
-                success: true,
-            };
-            (StatusCode::CREATED, Json(response))
-        }
-        Err(CommonErrors::ValidationError) => {
-            let response = ApiResponse {
-                data: None::<UserCreatedResponse>,
-                error: Some(CommonErrors::ValidationError),
-                success: false,
-            };
-            (StatusCode::CONFLICT, Json(response))
-        }
-        _ => {
-            let response = ApiResponse {
-                data: None::<UserCreatedResponse>,
-                error: Some(CommonErrors::UnexpectedServerError),
-                success: false,
-            };
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(response))
-        }
+    match controller::handle(payload).await {
+        Ok(id) => build_response(
+            StatusCode::CREATED,
+            Some(UserCreatedResponse { id }),
+            None,
+        ),
+        Err(CreateUserErrors::UsersError(UsersErrors::EmailAlreadyInUse)) => build_response(
+            StatusCode::CONFLICT,
+            None,
+            Some("EmailAlreadyInUse".to_string()),
+        ),
+        Err(CreateUserErrors::UsersError(UsersErrors::UsernameAlreadyTaken)) => build_response(
+            StatusCode::CONFLICT,
+            None,
+            Some("UsernameAlreadyTaken".to_string()),
+        ),
+        Err(CreateUserErrors::CommonError(CommonErrors::ValidationError)) => build_response(
+            StatusCode::BAD_REQUEST,
+            None,
+            Some("ValidationError".to_string()),
+        ),
+        Err(CreateUserErrors::CommonError(CommonErrors::UnexpectedServerError)) => build_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            None,
+            Some("ServerError".to_string()),
+        ),
+        _ => build_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            None,
+            Some("ServerError".to_string()),
+        )
     }
 }
