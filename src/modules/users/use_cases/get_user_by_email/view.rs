@@ -4,7 +4,7 @@ use http::StatusCode;
 use serde::Deserialize;
 
 use crate::modules::users::errors::UsersDomainErrors::UserNotFound;
-use crate::shared::common::errors::CommonErrors::UnexpectedServerError;
+use crate::shared::common::errors::CommonErrors::ServerError;
 use crate::modules::users::errors::UsersErrors::{CommonError, DomainError};
 use crate::modules::users::use_cases::get_user_by_email::controller;
 use crate::shared::infrastructure::utils::response::build_response;
@@ -33,7 +33,7 @@ pub async fn get_user_by_email(Query(params): Query<GetUserByEmailParams>) -> im
         _ => build_response(
             StatusCode::INTERNAL_SERVER_ERROR,
             None,
-            Some(CommonError(UnexpectedServerError).to_string()),
+            Some(CommonError(ServerError).to_string()),
         )
     }
 }

@@ -5,7 +5,7 @@ use crate::modules::users::{repository::UsersRepository, use_cases::create_user:
 use crate::modules::users::domain::user::UserModel;
 use crate::modules::users::errors::UsersDomainErrors::{EmailAlreadyInUse, UsernameAlreadyTaken};
 use crate::modules::users::errors::UsersErrors::{self, CommonError, DomainError};
-use crate::shared::common::errors::CommonErrors::UnexpectedServerError;
+use crate::shared::common::errors::CommonErrors::ServerError;
 use crate::shared::infrastructure::database as db;
 use crate::shared::infrastructure::database::repository::Repository;
 
@@ -34,5 +34,5 @@ pub fn create(
         return Err(DomainError(UsernameAlreadyTaken));
     }
 
-    repository.create(&user).map_err(|_e| CommonError(UnexpectedServerError))
+    repository.create(&user).map_err(|_e| CommonError(ServerError))
 }
