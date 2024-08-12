@@ -72,7 +72,6 @@ impl Repository<UserModel, UsersErrors> for UsersRepository {
     }
 
     fn update(&self, user: &UserModel) -> Result<(), UsersErrors> {
-        println!("{:?}", user.first_name);
         let conn = self.connection.lock().expect("Failed to lock the connection");
         match conn.execute(
             "UPDATE users SET username = :username, first_name = :first_name, last_name = :last_name, email = :email, updated_at = :updated_at WHERE id = :id",
