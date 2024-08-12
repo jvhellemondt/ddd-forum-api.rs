@@ -1,8 +1,11 @@
 use std::sync::Mutex;
 
-use rusqlite::{Connection, named_params};
-use crate::modules::users::domain::user::UserModel;
+use chrono::Local;
+use rusqlite::{Connection, named_params, ToSql};
 
+use crate::modules::users::domain::user::UserModel;
+use crate::modules::users::errors::UsersErrors::{self, CommonError};
+use crate::shared::common::errors::CommonErrors;
 use crate::shared::infrastructure::database::repository::Repository;
 
 pub struct UsersRepository {
@@ -15,8 +18,8 @@ impl UsersRepository {
     }
 }
 
-impl Repository<UserModel, rusqlite::Error> for UsersRepository {
-    fn create(&self, user: &UserModel) -> Result<i64, rusqlite::Error> {
+impl Repository<UserModel, UsersErrors> for UsersRepository {
+    fn create(&self, user: &UserModel) -> Result<i64, UsersErrors> {
         let conn = self.connection.lock().expect("Failed to lock the connection");
         match conn.execute(
             "INSERT INTO users (\
@@ -35,17 +38,16 @@ impl Repository<UserModel, rusqlite::Error> for UsersRepository {
                 },
         ) {
             Ok(_) => Ok(conn.last_insert_rowid()),
-            Err(err) => Err(err),
+            Err(_) => Err(CommonError(CommonErrors::ServerError)),
         }
     }
 
-    fn get_by(&self, key: &str, value: &str) -> Result<Option<UserModel>, rusqlite::Error> {
+    fn get_by<T: ToSql>(&self, key: &str, value: T) -> Result<Option<UserModel>, UsersErrors> {
         let conn = self.connection.lock().expect("Failed to lock the connection");
 
         let query = format!(
-            "SELECT id, email, username, first_name, last_name, created_at, updated_at \
-            FROM users \
-            WHERE {} = :value",
+            "SELECT id, email, username, first_name, last_name, password, created_at, updated_at \
+             FROM users WHERE {} = :value",
             key
         );
 
@@ -60,83 +62,31 @@ impl Repository<UserModel, rusqlite::Error> for UsersRepository {
                 username: row.get(2)?,
                 first_name: row.get(3)?,
                 last_name: row.get(4)?,
-                password: None,
-                created_at: row.get(5)?,
-                updated_at: row.get(6)?,
+                password: row.get(5)?,
+                created_at: row.get(6)?,
+                updated_at: row.get(7)?,
             };
             return Ok(Some(user));
         }
         Ok(None)
     }
 
-    //
-    // fn read(&self, id: &str) -> Result<User, ()> {
-    //     let conn = self.connection.lock().expect("Failed to lock the connection");
-    //
-    //     let mut stmt = conn.prepare("SELECT id, email, username, first_name, last_name, password, created_at, updated_at FROM users WHERE id = ?1")?;
-    //     let user = stmt.query_row(params![id], |row| {
-    //         Ok(User {
-    //             id: row.get(0)?,
-    //             email: row.get(1)?,
-    //             username: row.get(2)?,
-    //             first_name: row.get(3)?,
-    //             last_name: row.get(4)?,
-    //             password: row.get(5)?,
-    //             created_at: Local.timestamp(row.get(6)?, 0),
-    //             updated_at: Local.timestamp(row.get(7)?, 0),
-    //         })
-    //     })?;
-    //     Ok(user)
-    // }
-    //
-    // fn update(&self, user: &User) -> Result<(), ()> {
-    //     let conn = self.connection.lock().expect("Failed to lock the connection");
-    //
-    //     let sql = "UPDATE users SET email = ?1, username = ?2, first_name = ?3, last_name = ?4, password = ?5, created_at = ?6, updated_at = ?7 WHERE id = ?8";
-    //     conn.execute(
-    //         sql,
-    //         params![
-    //             user.email,
-    //             user.username,
-    //             user.first_name,
-    //             user.last_name,
-    //             user.password,
-    //             user.created_at.timestamp(),
-    //             user.updated_at.timestamp(),
-    //             user.id
-    //         ],
-    //     )?;
-    //     Ok(())
-    // }
-    //
-    // fn delete(&self, id: &str) -> Result<(), ()> {
-    //     let conn = self.connection.lock().expect("Failed to lock the connection");
-    //
-    //     conn.execute("DELETE FROM users WHERE id = ?1", params![id])?;
-    //     Ok(())
-    // }
-    //
-    // fn list(&self) -> Result<Vec<User>, ()> {
-    //     let conn = self.connection.lock().expect("Failed to lock the connection");
-    //
-    //     let mut stmt = conn.prepare("SELECT id, email, username, first_name, last_name, password, created_at, updated_at FROM users")?;
-    //     let user_iter = stmt.query_map((), |row| {
-    //         Ok(User {
-    //             id: row.get(0)?,
-    //             email: row.get(1)?,
-    //             username: row.get(2)?,
-    //             first_name: row.get(3)?,
-    //             last_name: row.get(4)?,
-    //             password: row.get(5)?,
-    //             created_at: Local.timestamp(row.get(6)?, 0),
-    //             updated_at: Local.timestamp(row.get(7)?, 0),
-    //         })
-    //     })?;
-    //
-    //     let mut users = Vec::new();
-    //     for user in user_iter {
-    //         users.push(user?);
-    //     }
-    //     Ok(users)
-    // }
+    fn update(&self, user: &UserModel) -> Result<(), UsersErrors> {
+        println!("{:?}", user.first_name);
+        let conn = self.connection.lock().expect("Failed to lock the connection");
+        match conn.execute(
+            "UPDATE users SET username = :username, first_name = :first_name, last_name = :last_name, email = :email, updated_at = :updated_at WHERE id = :id",
+            named_params! {
+                ":username": user.username,
+                ":first_name": user.first_name,
+                ":last_name": user.last_name,
+                ":email": user.email,
+                ":updated_at": Local::now().to_rfc3339(),
+                ":id": user.id,
+           },
+        ) {
+            Ok(_) => Ok(()),
+            Err(_) => Err(CommonError(CommonErrors::ServerError)),
+        }
+    }
 }

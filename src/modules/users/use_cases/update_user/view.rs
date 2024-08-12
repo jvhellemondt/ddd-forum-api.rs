@@ -1,25 +1,26 @@
 use axum::{Json, response::IntoResponse};
+use axum::extract::Path;
 use http::StatusCode;
-use serde::Serialize;
 use serde_json::Value;
-
 use crate::modules::users::errors::UsersDomainErrors;
+
+use crate::modules::users::errors::UsersDomainErrors::UserNotFound;
 use crate::modules::users::errors::UsersErrors::{CommonError, DomainError};
-use crate::modules::users::use_cases::create_user::controller;
+use crate::modules::users::use_cases::update_user::controller;
 use crate::shared::common::errors::CommonErrors;
 use crate::shared::infrastructure::utils::response::build_response;
 
-#[derive(Debug, Serialize, Clone)]
-pub struct UserCreatedResponse {
-    pub id: i64,
-}
-
-pub async fn post_create_user(Json(payload): Json<Value>) -> impl IntoResponse {
-    match controller::handle(payload).await {
-        Ok(id) => build_response(
-            StatusCode::CREATED,
-            Some(UserCreatedResponse { id }),
+pub async fn update_user(Path(id): Path<i64>, Json(payload): Json<Value>) -> impl IntoResponse {
+    match controller::handle(payload, id).await {
+        Ok(_) => build_response(
+            StatusCode::OK,
+            Some("OK".to_string()),
             None,
+        ),
+        Err(DomainError(UserNotFound)) => build_response(
+            StatusCode::NOT_FOUND,
+            None,
+            Some(DomainError(UserNotFound).to_string()),
         ),
         Err(DomainError(UsersDomainErrors::EmailAlreadyInUse)) => build_response(
             StatusCode::CONFLICT,

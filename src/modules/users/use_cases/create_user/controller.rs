@@ -1,13 +1,21 @@
 use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
 
 use serde_json::Value;
 
 use crate::modules::users::use_cases::create_user;
 use crate::modules::users::errors::UsersErrors::{self, CommonError};
-use crate::modules::users::use_cases::create_user::view::UserCreateRequestBody;
 use crate::shared::common::errors::CommonErrors::ValidationError;
 use crate::shared::utils::conversion::value_to_hashmap;
 use crate::shared::utils::validation::is_empty_value;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserCreateRequestBody {
+    pub email: String,
+    pub username: String,
+    pub first_name: String,
+    pub last_name: String,
+}
 
 const INSERT_USER_ALLOWED_FIELDS: &[&str] = &["email", "username", "first_name", "last_name"];
 
