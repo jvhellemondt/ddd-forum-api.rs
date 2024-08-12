@@ -21,15 +21,15 @@ fn has_only_insert_user_fields(input: &HashMap<String, Value>) -> bool {
     input.keys().all(|key| INSERT_USER_ALLOWED_FIELDS.contains(&key.as_str()))
 }
 
-fn is_user_insert_valid(input: &Value) -> bool {
+fn is_user_payload_valid(input: &Value) -> bool {
     let value_map = value_to_hashmap::convert(input.clone());
     has_every_insert_user_field(&value_map) && has_only_insert_user_fields(&value_map)
 }
 
 pub async fn handle(payload: Value) -> Result<i64, UsersErrors> {
-    if !is_user_insert_valid(&payload) {
+    if !is_user_payload_valid(&payload) {
         return Err(CommonError(ValidationError));
     }
     let user_create_request: UserCreateRequestBody = serde_json::from_value(payload).map_err(|_e| CommonError(ValidationError))?;
-    create_user::model::create(user_create_request)
+    create_user::model::execute(user_create_request)
 }

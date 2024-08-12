@@ -9,7 +9,7 @@ use crate::shared::common::errors::CommonErrors::ServerError;
 use crate::shared::infrastructure::database as db;
 use crate::shared::infrastructure::database::repository::Repository;
 
-pub fn create(
+pub fn execute(
     payload: view::UserCreateRequestBody,
 ) -> Result<i64, UsersErrors> {
     let now = Local::now();

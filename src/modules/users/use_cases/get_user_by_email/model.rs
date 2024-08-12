@@ -5,7 +5,7 @@ use crate::modules::users::use_cases::get_user_by_email::view::GetUserByEmailPar
 use crate::shared::common::errors::CommonErrors::ServerError;
 use crate::shared::infrastructure::{database as db, database::repository::Repository};
 
-pub fn find(
+pub fn execute(
     dto: GetUserByEmailParams,
 ) -> Result<Option<UserModel>, UsersErrors> {
     let repository = UsersRepository::new(db::connection::get_connection());
