@@ -15,7 +15,7 @@ pub fn execute(
     let now = Local::now();
     let user = UserModel {
         id: None,
-        email: payload.email.to_string(),
+        email: payload.email.to_string().to_lowercase(),
         username: payload.username.to_string(),
         first_name: payload.first_name.to_string(),
         last_name: payload.last_name.to_string(),

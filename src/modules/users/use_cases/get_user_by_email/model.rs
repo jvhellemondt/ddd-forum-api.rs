@@ -9,7 +9,7 @@ pub fn execute(
     dto: GetUserByEmailParams,
 ) -> Result<Option<UserModel>, UsersErrors> {
     let repository = UsersRepository::new(db::connection::get_connection());
-    match repository.get_by("email", &dto.email) {
+    match repository.get_by("email", &dto.email.to_lowercase()) {
         Ok(Some(user)) => Ok(Some(user)),
         Ok(None) => Ok(None),
         Err(_) => Err(CommonError(ServerError))
