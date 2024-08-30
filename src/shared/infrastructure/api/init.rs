@@ -9,6 +9,7 @@ use axum::{
     Router,
 };
 use tower_http::{classify::ServerErrorsFailureClass, trace::TraceLayer};
+use tower_http::cors::{CorsLayer};
 use tracing::{info_span, Span};
 
 use crate::modules::common::infrastructure::api::routes as common;
@@ -21,6 +22,7 @@ pub fn initialize_app() -> Router {
     let router = axum::Router::new()
         .nest("/", common_router)
         .nest("/", users_router)
+        .layer(CorsLayer::permissive())
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(|request: &Request<_>| {
