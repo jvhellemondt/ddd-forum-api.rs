@@ -3,10 +3,10 @@ use axum::response::IntoResponse;
 use http::StatusCode;
 use serde::Deserialize;
 
-use crate::modules::users::errors::UsersDomainErrors::UserNotFound;
-use crate::shared::common::errors::CommonErrors::ServerError;
-use crate::modules::users::errors::UsersErrors::{CommonError, DomainError};
+use crate::modules::users::errors::UsersDomainErrors;
+use crate::modules::users::errors::UsersModuleErrors::CommonError;
 use crate::modules::users::use_cases::get_user_by_email::controller;
+use crate::shared::common::errors::CommonErrors::ServerError;
 use crate::shared::infrastructure::utils::response::build_response;
 
 #[derive(Deserialize, Clone)]
@@ -28,7 +28,7 @@ pub async fn get_user_by_email(Query(params): Query<GetUserByEmailParams>) -> im
         Ok(None) => build_response(
             StatusCode::NOT_FOUND,
             None,
-            Some(DomainError(UserNotFound).to_string()),
+            Some(UsersDomainErrors::UserNotFound.to_string()),
         ),
         _ => build_response(
             StatusCode::INTERNAL_SERVER_ERROR,

@@ -1,0 +1,4 @@
+CREATE TABLE members (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE
+);

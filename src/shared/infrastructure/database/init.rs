@@ -1,21 +1,23 @@
-use chrono::{DateTime, Local, Utc};
+use crate::shared::infrastructure::database::connection::{get_db_pool, init_db_pool};
+use anyhow::Result;
 
-use crate::shared::infrastructure::database as db;
-
-fn make_connection() {
-    let conn = db::connection::get_connection();
-    let conn_lock = conn.lock().unwrap();
-    let current_datetime: String = conn_lock
-        .query_row("SELECT datetime('now');", (), |row| row.get(0))
-        .expect("Database connection: Failed to get current datetime");
-    let current_datetime_utc = DateTime::parse_from_rfc3339(&format!("{}Z", current_datetime))
-        .expect("Failed to parse datetime")
-        .with_timezone(&Utc);
-    let local_datetime = current_datetime_utc.with_timezone(&Local);
-    tracing::debug!("Database: Connection established on {}", local_datetime);
+async fn check_connection() -> Result<()> {
+    let pool = get_db_pool();
+    sqlx::query("SELECT 1")
+        .execute(&*pool)
+        .await?;
+    Ok(())
 }
 
-pub fn initialize_database() {
-    make_connection();
-    db::models::users::table::create_users_table();
+pub async fn execute() -> Result<()> {
+    if let Err(e) = init_db_pool().await {
+        eprintln!("Failed to initialize database: {}", e);
+        return Err(e.into());
+    }
+
+    if let Err(e) = check_connection().await {
+        eprintln!("Connection query failed: {}", e);
+        return Err(e.into());
+    }
+    Ok(())
 }

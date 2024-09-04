@@ -1,37 +1,34 @@
-use crate::modules::users::errors::UsersDomainErrors::{EmailAlreadyInUse, UsernameAlreadyTaken, UserNotFound};
-use crate::modules::users::errors::UsersErrors::{self, CommonError, DomainError};
-use crate::modules::users::repository::UsersRepository;
+use crate::modules::users::errors::{UsersDomainErrors, UsersModuleErrors};
+use crate::modules::users::errors::UsersModuleErrors::CommonError;
+use crate::modules::users::repositories::implementations::postgres_user_repository::PostgresUserRepository;
+use crate::modules::users::repositories::user_repository::UserRepository;
 use crate::modules::users::use_cases::update_user::controller::UserUpdateRequestBody;
 use crate::shared::common::errors::CommonErrors::ServerError;
-use crate::shared::infrastructure::database as db;
-use crate::shared::infrastructure::database::repository::Repository;
 
-pub fn execute(
+pub async fn execute(
     payload: UserUpdateRequestBody,
-    id: i64,
-) -> Result<(), UsersErrors> {
-    let repository = UsersRepository::new(db::connection::get_connection());
+    id: i32,
+) -> Result<(), UsersModuleErrors> {
+    let repository = PostgresUserRepository::new();
 
-    let mut user_model = match repository.get_by("id", id) {
+    let mut user_model = match repository.find_by_id(&id).await {
         Ok(Some(user)) => user,
-        Ok(None) => return Err(DomainError(UserNotFound)),
+        Ok(None) => return Err(UsersModuleErrors::from(UsersDomainErrors::UserNotFound)),
         Err(_) => return Err(CommonError(ServerError)),
     };
 
     if let Some(ref email) = payload.email {
-        if let Ok(Some(user)) = repository.get_by("email", email) {
-            // @TODO: why is it saying payload.id is an Option. It's not?
+        if let Ok(Some(user)) = repository.find_by_email(email).await {
             if user.id != user_model.id {
-                return Err(DomainError(EmailAlreadyInUse));
+                return Err(UsersModuleErrors::from(UsersDomainErrors::EmailAlreadyInUse));
             }
         }
     }
 
     if let Some(ref username) = payload.username {
-        if let Ok(Some(user)) = repository.get_by("username", username) {
-            // @TODO: why is it saying payload.id is an Option. It's not?
+        if let Ok(Some(user)) = repository.find_by_username(username).await {
             if user.id != Option::from(id) {
-                return Err(DomainError(UsernameAlreadyTaken));
+                return Err(UsersModuleErrors::from(UsersDomainErrors::UsernameAlreadyTaken));
             }
         }
     }
@@ -49,5 +46,5 @@ pub fn execute(
         user_model.last_name = last_name;
     }
 
-    repository.update(&user_model)
+    repository.update(&user_model).await
 }
