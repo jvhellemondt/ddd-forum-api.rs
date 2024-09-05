@@ -12,16 +12,13 @@ use tower_http::{classify::ServerErrorsFailureClass, trace::TraceLayer};
 use tower_http::cors::{CorsLayer};
 use tracing::{info_span, Span};
 
-use crate::modules::common::infrastructure::api::routes as common;
-use crate::modules::users::infrastructure::api::routes as users;
+use crate::modules::common::infrastructure::api::routes::common_router;
+use crate::modules::users::infrastructure::api::routes::users_router;
 
 pub fn initialize_app() -> Router {
-    let common_router = common::common_router();
-    let users_router = users::users_router();
-
     let router = axum::Router::new()
-        .nest("/", common_router)
-        .nest("/", users_router)
+        .nest("/", common_router())
+        .nest("/", users_router())
         .layer(CorsLayer::permissive())
         .layer(
             TraceLayer::new_for_http()
@@ -44,6 +41,6 @@ pub fn initialize_app() -> Router {
                     |_error: ServerErrorsFailureClass, _latency: Duration, _span: &Span| {},
                 ),
         );
-    tracing::debug!("App: routes initialized");
+    tracing::debug!("Api: routes initialized");
     return router;
 }
