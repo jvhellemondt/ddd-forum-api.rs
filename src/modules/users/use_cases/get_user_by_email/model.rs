@@ -1,4 +1,4 @@
-use crate::modules::users::domain::user_entity::UserEntity;
+use crate::modules::users::domain::user::User;
 use crate::modules::users::errors::UsersModuleErrors::{self, CommonError};
 use crate::modules::users::repositories::implementations::postgres_user_repository::PostgresUserRepository;
 use crate::modules::users::repositories::user_repository::UserRepository;
@@ -7,7 +7,7 @@ use crate::shared::common::errors::CommonErrors::ServerError;
 
 pub async fn execute(
     dto: GetUserByEmailParams,
-) -> Result<Option<UserEntity>, UsersModuleErrors> {
+) -> Result<Option<User>, UsersModuleErrors> {
     let repository = PostgresUserRepository::new();
 
     match repository.find_by_email(&dto.email.to_lowercase()).await {

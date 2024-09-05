@@ -1,16 +1,15 @@
 use chrono::Utc;
 use ulid::Ulid;
 
-use crate::modules::users::domain::user_entity::UserEntity;
 use crate::modules::users::errors::{UsersDomainErrors, UsersModuleErrors};
 use crate::modules::users::repositories::implementations::postgres_user_repository::PostgresUserRepository;
-use crate::modules::users::repositories::user_repository::UserRepository;
+use crate::modules::users::repositories::user_repository::{InsertUserModel, UserRepository};
 use crate::modules::users::use_cases::create_user::controller;
 
 pub async fn execute(
     payload: controller::UserCreateRequestBody,
 ) -> Result<i32, UsersModuleErrors> {
-    let user = UserEntity {
+    let user = InsertUserModel {
         id: None,
         email: payload.email.to_lowercase(),
         username: payload.username.to_string(),
