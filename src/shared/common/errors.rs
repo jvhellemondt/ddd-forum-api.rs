@@ -9,6 +9,6 @@ pub enum CommonErrors {
     #[error("Server encountered an unexpected error")]
     ServerError,
 
-    #[error("Database error")]
-    DatabaseError,
+    #[error("Database error: {0:?}")]
+    DatabaseError(Option<String>),
 }

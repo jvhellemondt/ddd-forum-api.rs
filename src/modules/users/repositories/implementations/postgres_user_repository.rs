@@ -36,7 +36,7 @@ impl UserRepository for PostgresUserRepository {
 
         match result {
             Ok(record) => Ok(record.id),
-            _ => Err(UsersModuleErrors::CommonError(DatabaseError)),
+            _ => Err(UsersModuleErrors::CommonError(DatabaseError(None))),
         }
     }
 
@@ -50,7 +50,7 @@ impl UserRepository for PostgresUserRepository {
         match result {
             Ok(user) => Ok(user),
             Err(SqlxError::RowNotFound) => Err(UsersModuleErrors::DomainError(UsersDomainErrors::UserNotFound)),
-            _ => Err(UsersModuleErrors::CommonError(DatabaseError)),
+            _ => Err(UsersModuleErrors::CommonError(DatabaseError(None))),
         }
     }
 
@@ -64,7 +64,7 @@ impl UserRepository for PostgresUserRepository {
         match result {
             Ok(user) => Ok(user),
             Err(SqlxError::RowNotFound) => Err(UsersModuleErrors::DomainError(UsersDomainErrors::UserNotFound)),
-            _ => Err(UsersModuleErrors::CommonError(DatabaseError)),
+            _ => Err(UsersModuleErrors::CommonError(DatabaseError(None))),
         }
     }
 
@@ -78,7 +78,7 @@ impl UserRepository for PostgresUserRepository {
         match result {
             Ok(user) => Ok(user),
             Err(SqlxError::RowNotFound) => Err(UsersModuleErrors::DomainError(UsersDomainErrors::UserNotFound)),
-            _ => Err(UsersModuleErrors::CommonError(DatabaseError)),
+            _ => Err(UsersModuleErrors::CommonError(DatabaseError(None))),
         }
     }
 
@@ -97,7 +97,7 @@ impl UserRepository for PostgresUserRepository {
         match result {
             Ok(_) => Ok(()),
             Err(SqlxError::RowNotFound) => Err(UsersModuleErrors::DomainError(UsersDomainErrors::UserNotFound)),
-            _ => Err(UsersModuleErrors::CommonError(DatabaseError)),
+            _ => Err(UsersModuleErrors::CommonError(DatabaseError(None))),
         }
     }
 }

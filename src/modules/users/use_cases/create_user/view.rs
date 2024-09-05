@@ -45,10 +45,15 @@ pub async fn post_create_user(Json(payload): Json<Value>) -> impl IntoResponse {
             None,
             Some(CommonErrors::ServerError.to_string()),
         ),
-        Err(UsersModuleErrors::CommonError(CommonErrors::DatabaseError)) => build_response(
+        Err(UsersModuleErrors::CommonError(CommonErrors::DatabaseError(None))) => build_response(
             StatusCode::INTERNAL_SERVER_ERROR,
             None,
-            Some(CommonErrors::DatabaseError.to_string()),
+            Some(CommonErrors::DatabaseError(None).to_string()),
+        ),
+        Err(UsersModuleErrors::CommonError(CommonErrors::DatabaseError(Some(err)))) => build_response(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            None,
+            Some(CommonErrors::DatabaseError(Some(err)).to_string()),
         ),
     }
 }
