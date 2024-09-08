@@ -1,14 +1,15 @@
 [build]
 builder = "NIXPACKS"
+buildCommand="mkdir -p bin && cargo sqlx migrate run && cargo build --release && cp target/release/ddd_forum_api bin"
 
-[build.nixpacksPlan.phases.build]
-dependsOn = ["install"]
-cmds = [
-    "mkdir -p bin",
-    "cargo sqlx migrate run",
-    "cargo build --release",
-    "cp target/release/ddd_forum_api bin"
-]
+#[build.nixpacksPlan.phases.build]
+#dependsOn = ["install"]
+#cmds = [
+#    "mkdir -p bin",
+#    "cargo sqlx migrate run",
+#    "cargo build --release",
+#    "cp target/release/ddd_forum_api bin"
+#]
 
 [deploy]
 startCommand = "./bin/ddd_forum_api"
