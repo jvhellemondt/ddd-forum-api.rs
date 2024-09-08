@@ -1,0 +1,21 @@
+[build]
+builder = "NIXPACKS"
+
+[build.nixpacksPlan.phases.build]
+dependsOn = ["install"]
+cmds = [
+    "mkdir -p bin",
+    "cargo sqlx migrate run",
+    "cargo build --release",
+    "cp target/release/ddd_forum_api bin"
+]
+
+[deploy]
+startCommand = "./bin/ddd_forum_api"
+numReplicas = 1
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+sleepApplication = true
+region = "europe-west4"
