@@ -4,9 +4,18 @@ use dotenv::dotenv;
 use tokio::net::TcpListener;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::shared::infrastructure::database;
+use std::env;
 
 mod modules;
 mod shared;
+
+fn get_host() -> String {
+    env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string())
+}
+
+fn get_port() -> String {
+    env::var("PORT").unwrap_or_else(|_| "8080".to_string())
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,12 +33,12 @@ async fn main() -> Result<()> {
 
     // Webserver
     let app = shared::infrastructure::api::init::initialize_app();
-    let host: &str = "127.0.0.1";
-    let port: u16 = 8080;
+    let host: String = get_host();
+    let port: String = get_port();
     let address = format!("{}:{}", host, port);
 
-    let listener = TcpListener::bind(address).await.unwrap();
-    tracing::debug!("Server: Listening on http://localhost:{}", port);
+    let listener = TcpListener::bind(&address).await.unwrap();
+    tracing::debug!("Server: Listening on http://{}", address);
 
     axum::serve(listener, app).await.unwrap();
     Ok(())
