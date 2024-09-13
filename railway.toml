@@ -8,21 +8,12 @@ buildCommand = """
   mkdir -p bin &&
   cp target/release/ddd_forum_api bin
   """
-#buildCommand="mkdir -p bin && cargo sqlx migrate run && cargo build --release && cp target/release/ddd_forum_api bin"
-
-#[build.nixpacksPlan.phases.build]
-#dependsOn = ["install"]
-#cmds = [
-#    "mkdir -p bin",
-#    "cargo sqlx migrate run",
-#    "cargo build --release",
-#    "cp target/release/ddd_forum_api bin"
-#]
 
 [deploy]
-startCommand = "./bin/ddd_forum_api"
+startCommand = "./bin/ddd_forum_api --port $PORT"
 numReplicas = 1
-healthcheckTimeout = 100
+#healthcheckPath = "/health"
+#healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 sleepApplication = true
