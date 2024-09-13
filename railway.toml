@@ -3,7 +3,7 @@ builder = "NIXPACKS"
 buildCommand = """
   cargo install sqlx-cli --no-default-features --features postgres &&
   export DATABASE_URL=$DATABASE_URL &&
-  sqlx migrate run &&
+  cargo sqlx migrate run &&
   cargo build --release &&
   mkdir -p bin &&
   cp target/release/ddd_forum_api bin
