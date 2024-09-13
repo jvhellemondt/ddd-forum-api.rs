@@ -1,5 +1,4 @@
 use axum;
-use anyhow::Result;
 use dotenv::dotenv;
 use tokio::net::TcpListener;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -18,7 +17,7 @@ fn get_port() -> String {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() {
     dotenv().ok();
 
     tracing_subscriber::registry()
@@ -28,7 +27,7 @@ async fn main() -> Result<()> {
     // Database
     if let Err(e) = database::init::execute().await {
         tracing::error!("Database initialization error: {}", e);
-        return Err(e.into());
+        panic!("Database initialization error: {:?}", e);
     }
 
     // Webserver
@@ -41,5 +40,4 @@ async fn main() -> Result<()> {
     tracing::debug!("Server: Listening on http://{}", address);
 
     axum::serve(listener, app).await.unwrap();
-    Ok(())
 }
