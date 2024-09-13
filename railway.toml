@@ -18,3 +18,4 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 sleepApplication = true
 region = "europe-west4"
+runtime = "V2"
