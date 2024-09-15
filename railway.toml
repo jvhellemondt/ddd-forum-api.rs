@@ -12,7 +12,7 @@ buildCommand = """
 [deploy]
 startCommand = "./bin/ddd_forum_api --port $PORT"
 numReplicas = 1
-healthcheckPath = "/health"
+healthcheckPath = "/api/health"
 healthcheckTimeout = 500
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
