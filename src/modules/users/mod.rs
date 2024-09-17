@@ -1,5 +1,5 @@
 pub mod domain {
-    pub mod user;
+    pub mod user_entity;
 }
 
 pub mod use_cases {
@@ -23,7 +23,13 @@ pub mod use_cases {
 }
 
 pub mod errors;
-pub mod repository;
+pub mod repositories {
+    pub mod user_repository;
+
+    pub mod implementations {
+        pub mod postgres_user_repository;
+    }
+}
 
 pub mod infrastructure {
     pub mod api {

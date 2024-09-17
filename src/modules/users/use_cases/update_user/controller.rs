@@ -1,8 +1,10 @@
 use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::modules::users::errors::UsersErrors::{self, CommonError};
+use crate::modules::users::errors::UsersModuleErrors;
+use crate::modules::users::errors::UsersModuleErrors::CommonError;
 use crate::modules::users::use_cases::update_user;
 use crate::shared::common::errors::CommonErrors::ValidationError;
 use crate::shared::utils::conversion::value_to_hashmap;
@@ -26,11 +28,11 @@ fn is_user_payload_valid(input: &Value) -> bool {
     has_only_insert_user_fields(&value_map)
 }
 
-pub async fn handle(payload: Value, id: i64) -> Result<(), UsersErrors> {
+pub async fn handle(payload: Value, id: i32) -> Result<(), UsersModuleErrors> {
     if !is_user_payload_valid(&payload) {
         return Err(CommonError(ValidationError));
     }
     let body: UserUpdateRequestBody = serde_json::from_value(payload).map_err(|_e| CommonError(ValidationError))?;
-    update_user::model::execute(body, id)
+    update_user::model::execute(body, id).await
 }
 

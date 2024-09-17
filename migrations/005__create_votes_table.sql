@@ -1,0 +1,6 @@
+CREATE TABLE votes (
+    id SERIAL PRIMARY KEY,
+    post_id INT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    member_id INT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    vote_type TEXT NOT NULL
+);

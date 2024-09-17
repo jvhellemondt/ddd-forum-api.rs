@@ -8,6 +8,20 @@
 cargo run
 ```
 
+## Running database migrations
+
+### Make sure the SQLX cli is installed
+
+```bash
+cargo install sqlx-cli --no-default-features --features postgres
+```
+
+### Migration
+
+```bash
+sqlx migrate
+```
+
 ## Rust Installation
 
 ### 1. Installing Rust

@@ -1,18 +1,14 @@
-use std::fmt;
+use thiserror::Error;
 use serde::Serialize;
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Error)]
 pub enum CommonErrors {
+    #[error("Validation error occurred")]
     ValidationError,
-    ServerError,
-}
 
-impl fmt::Display for CommonErrors {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let variant_str = match self {
-            CommonErrors::ValidationError => "ValidationError",
-            CommonErrors::ServerError => "UnexpectedServerError",
-        };
-        write!(f, "{}", variant_str)
-    }
+    #[error("Server encountered an unexpected error")]
+    ServerError,
+
+    #[error("Database error")]
+    DatabaseError,
 }
