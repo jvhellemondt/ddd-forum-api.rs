@@ -16,10 +16,13 @@ use crate::modules::users::infrastructure::api::routes::users_router;
 use crate::modules::posts::infrastructure::api::routes::posts_router;
 
 pub fn initialize_app() -> Router {
-    let router = axum::Router::new()
+    let api_routes = Router::new()
         .nest("/", common_router())
         .nest("/", users_router())
-        .nest("/", posts_router())
+        .nest("/", posts_router());
+
+    let router = axum::Router::new()
+        .nest("/api", api_routes)
         .layer(CorsLayer::permissive())
         .layer(
             TraceLayer::new_for_http()
