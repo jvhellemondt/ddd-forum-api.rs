@@ -1,10 +1,9 @@
 use crate::shared::infrastructure::database;
 use axum;
 use dotenv::dotenv;
-use fmt::format;
 use std::env;
 use tokio::net::TcpListener;
-use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod modules;
 mod shared;
