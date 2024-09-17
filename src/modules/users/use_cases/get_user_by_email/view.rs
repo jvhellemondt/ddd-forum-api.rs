@@ -11,7 +11,7 @@ use crate::shared::infrastructure::utils::response::build_response;
 
 #[derive(Deserialize, Clone)]
 pub struct GetUserByEmailParams {
-    pub(crate) email: String,
+    pub email: String,
 }
 
 pub async fn get_user_by_email(Query(params): Query<GetUserByEmailParams>) -> impl IntoResponse {

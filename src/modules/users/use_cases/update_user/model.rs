@@ -27,7 +27,7 @@ pub async fn execute(
 
     if let Some(ref username) = payload.username {
         if let Ok(Some(user)) = repository.find_by_username(username).await {
-            if user.id != Option::from(id) {
+            if user.id != id {
                 return Err(UsersModuleErrors::from(UsersDomainErrors::UsernameAlreadyTaken));
             }
         }

@@ -1,5 +1,6 @@
 pub mod domain {
-    pub mod user_entity;
+    pub mod user;
+    pub mod member;
 }
 
 pub mod use_cases {
