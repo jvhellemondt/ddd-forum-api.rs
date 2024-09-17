@@ -1,13 +1,13 @@
 use crate::shared::infrastructure::database::connection::{get_db_pool, init_db_pool};
 use anyhow::Result;
-use tracing::debug;
+use tracing;
 
 async fn check_connection() -> Result<()> {
     let pool = get_db_pool();
     sqlx::query("SELECT 1")
         .execute(&*pool)
         .await?;
-    debug!("Database: connection live");
+    tracing::info!("Database: connection live");
     Ok(())
 }
 
