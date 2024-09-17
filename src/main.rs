@@ -9,7 +9,7 @@ mod modules;
 mod shared;
 
 fn get_host() -> String {
-    env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string())
+    env::var("HOST").unwrap_or_else(|_| "[::]".to_string())
 }
 
 fn get_port() -> String {
