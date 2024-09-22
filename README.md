@@ -66,12 +66,6 @@ To update the Rust toolchain to the latest stable version, run:
 rustup update
 ```
 
-For Homebrew:
-
-```bash
-brew upgrade rust
-```
-
 This command will update `rustc`, `cargo`, and `rustup` to the latest versions.
 
 ## Managing Dependencies
