@@ -38,7 +38,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 For Homebrew:
 
 ```bash
-brew install rust
+brew install rustup
 ```
 
 Follow the on-screen instructions to complete the installation. After installation, make sure to configure your
