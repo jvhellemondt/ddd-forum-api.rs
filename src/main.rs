@@ -41,7 +41,7 @@ async fn main() {
     let app = Router::new()
         .route("/health", get(get_health))
         .route("/users/create", post(create_user))
-        .route("/users/:id", get(read_user))
+        .route("/users", get(read_user))
         .route("/users/:id", put(update_user))
         .fallback(handler_404)
         .layer(Extension(pool.clone()))
@@ -313,7 +313,7 @@ async fn read_user(Extension(pool): Extension<Arc<DbPool>>, Query(params): Query
             "code": ApiErrors::ValidationError,
             "message": "Email is required and cannot be empty."
         });
-        return build_response(StatusCode::BAD_REQUEST, None, Some(error_message));
+        return build_response(StatusCode::CONFLICT, None, Some(error_message));
     }
 
     let mut conn = match pool.get() {
