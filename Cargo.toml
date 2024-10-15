@@ -1,6 +1,21 @@
 [package]
-name = "ddd-forum_rs"
+name = "ddd_forum_api"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+axum = { version = "0.7.7" }
+tokio = { version = "1.40.0", features = ["full"] }
+serde_json = "1.0.128"
+tracing = "0.1.40"
+tower-http = { version = "0.6.1", features = ["cors", "trace", "tracing"] }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+http = "1.1.0"
+serde = { version = "1.0.210", features = ["derive"] }
+dotenvy = "0.15.7"
+diesel = { version = "2.2.4", features = ["chrono", "postgres", "r2d2"] }
+chrono = { version = "0.4", features = ["serde", "clock"] }
+r2d2 = "0.8.10"
+thiserror = "1.0.64"
+reqwest = { version = "0.11", features = ["json"] }
+fake = "2.9.2"
