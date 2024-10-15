@@ -307,8 +307,39 @@ struct ReadUserQueryParams {
     email: String,
 }
 
-async fn read_user(Query(params): Query<ReadUserQueryParams>) -> impl IntoResponse {
-    println!("{:?}", params);
-    let body = json!({ "email": params.email });
-    build_response(StatusCode::OK, Some(body), None)
+async fn read_user(Extension(pool): Extension<Arc<DbPool>>, Query(params): Query<ReadUserQueryParams>) -> impl IntoResponse {
+    if params.email.trim().is_empty() {
+        let error_message = json!({
+            "code": ApiErrors::ValidationError,
+            "message": "Email is required and cannot be empty."
+        });
+        return build_response(StatusCode::BAD_REQUEST, None, Some(error_message));
+    }
+
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
+        Err(error) => {
+            tracing::error!("{}: Failed to get DB connection {}", ApiErrors::DatabaseError.to_string(), error);
+            let error_message = json!({ "code": ApiErrors::InternalServerError.to_string() });
+            return build_response(StatusCode::INTERNAL_SERVER_ERROR, None, Some(error_message));
+        }
+    };
+
+    match users::table
+        .filter(email.eq(params.email))
+        .first::<User>(&mut conn) {
+        Ok(user) => {
+            let body = json!(user);
+            build_response(StatusCode::OK, Some(body), None)
+        }
+        Err(Error::NotFound) => {
+            let error_message = json!({ "code": UserErrors::UserNotFound, "message": UserErrors::UserNotFound.to_string() });
+            build_response(StatusCode::NOT_FOUND, None, Some(error_message))
+        }
+        Err(error) => {
+            tracing::error!("{}: Unexpected database error {}", ApiErrors::DatabaseError.to_string(), error);
+            let error_message = json!({ "code": ApiErrors::InternalServerError.to_string() });
+            build_response(StatusCode::INTERNAL_SERVER_ERROR, None, Some(error_message))
+        }
+    }
 }
