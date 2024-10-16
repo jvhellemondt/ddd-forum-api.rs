@@ -2,6 +2,7 @@
 name = "ddd_forum_api"
 version = "0.1.0"
 edition = "2021"
+default-run = "ddd_forum_api"
 
 [dependencies]
 axum = { version = "0.7.7" }
