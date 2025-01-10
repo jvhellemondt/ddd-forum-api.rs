@@ -20,12 +20,8 @@ use tower_http::{classify::ServerErrorsFailureClass, cors::CorsLayer, trace::Tra
 use tracing::{info_span, Span};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-pub mod models;
-pub mod schema;
-
-use crate::models::{NewUser, UpdateUser, User};
-use crate::schema::users;
-use crate::schema::users::email;
+use ddd_forum_api::models::{Comment, NewUser, Post, UpdateUser, User, Vote};
+use ddd_forum_api::schema::{comments, members, posts, users::{self, email}, votes};
 
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
@@ -43,6 +39,7 @@ async fn main() {
         .route("/users/create", post(create_user))
         .route("/users", get(read_user))
         .route("/users/:id", put(update_user))
+        .route("/posts", get(list_posts))
         .fallback(handler_404)
         .layer(Extension(pool.clone()))
         .layer(CorsLayer::permissive())
@@ -222,11 +219,11 @@ async fn create_user(Extension(pool): Extension<Arc<DbPool>>, Json(payload): Jso
         }
         Err(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, info)) => {
             let error_code = match info.constraint_name() {
-                Some("users_username_key") => "UsernameAlreadyTaken".to_string(),
-                Some("users_email_key") => "EmailAlreadyInUse".to_string(),
-                _ => "UniqueConstraintViolation.".to_string(),
+                Some("users_username_key") => AppErrors::UserError(UserErrors::UsernameAlreadyTaken),
+                Some("users_email_key") => AppErrors::UserError(UserErrors::EmailAlreadyInUse),
+                _ => AppErrors::ApiError(ApiErrors::UniqueConstraintViolationError),
             };
-            build_response(StatusCode::CONFLICT, None, Some(json!({ "code": error_code })))
+            build_response(StatusCode::CONFLICT, None, Some(json!({ "code": error_code, "message": error_code.to_string() })))
         }
         Err(error) => {
             tracing::error!("{}: Unexpected database error {}", ApiErrors::DatabaseError.to_string(), error);
@@ -335,6 +332,169 @@ async fn read_user(Extension(pool): Extension<Arc<DbPool>>, Query(params): Query
         Err(Error::NotFound) => {
             let error_message = json!({ "code": UserErrors::UserNotFound, "message": UserErrors::UserNotFound.to_string() });
             build_response(StatusCode::NOT_FOUND, None, Some(error_message))
+        }
+        Err(error) => {
+            tracing::error!("{}: Unexpected database error {}", ApiErrors::DatabaseError.to_string(), error);
+            let error_message = json!({ "code": ApiErrors::InternalServerError.to_string() });
+            build_response(StatusCode::INTERNAL_SERVER_ERROR, None, Some(error_message))
+        }
+    }
+}
+
+#[derive(Deserialize, Clone, Debug)]
+struct ListPostsQueryParams {
+    sort: String,
+}
+
+#[derive(Serialize)]
+struct PostResponse {
+    id: i32,
+    member_id: i32,
+    post_type: String,
+    title: String,
+    content: String,
+    created_at: String,
+    updated_at: String,
+    votes: Vec<VoteResponse>,
+    member_posted_by: MemberPostedByResponse,
+    comments: Vec<CommentResponse>,
+}
+
+#[derive(Serialize)]
+struct VoteResponse {
+    id: i32,
+    post_id: i32,
+    member_id: i32,
+    vote_type: String,
+    created_at: String,
+    updated_at: String,
+}
+
+#[derive(Serialize)]
+struct CommentResponse {
+    id: i32,
+    post_id: i32,
+    text: String,
+    member_id: i32,
+    parent_comment_id: Option<i32>,
+    created_at: String,
+    updated_at: String,
+}
+
+#[derive(Serialize)]
+struct MemberPostedByResponse {
+    id: i32,
+    user_id: i32,
+    user: UserResponse,
+}
+
+#[derive(Serialize)]
+struct UserResponse {
+    id: i32,
+    email: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    first_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    last_name: Option<String>,
+    username: String,
+    created_at: String,
+    updated_at: String,
+}
+
+fn load_posts_with_votes_and_comments(conn: &mut PgConnection) -> QueryResult<Vec<PostResponse>> {
+    let results = posts::table
+        .inner_join(members::table.on(members::id.eq(posts::member_id)))
+        .inner_join(users::table.on(users::id.eq(members::user_id)))
+        .left_join(votes::table.on(votes::post_id.eq(posts::id)))
+        .left_join(comments::table.on(comments::post_id.eq(posts::id)))
+        .order(posts::created_at.desc())
+        .select((
+            posts::all_columns,
+            votes::all_columns.nullable(),
+            comments::all_columns.nullable(),
+            users::all_columns,
+        ))
+        .load::<(Post, Option<Vote>, Option<Comment>, User)>(conn)?;
+
+    let mut posts_map = std::collections::HashMap::new();
+
+    for (post, vote, comment, user) in results {
+        let post_entry = posts_map.entry(post.id).or_insert_with(|| PostResponse {
+            id: post.id,
+            member_id: post.member_id,
+            post_type: post.post_type,
+            title: post.title,
+            content: post.content,
+            created_at: post.created_at.to_string(),
+            updated_at: post.updated_at.to_string(),
+            votes: Vec::new(),
+            member_posted_by: MemberPostedByResponse {
+                id: post.member_id,
+                user_id: user.id,
+                user: UserResponse {
+                    id: user.id,
+                    email: user.email,
+                    first_name: None,
+                    last_name: None,
+                    username: user.username,
+                    created_at: user.created_at.to_string(),
+                    updated_at: user.updated_at.to_string(),
+                },
+            },
+            comments: Vec::new(),
+        });
+
+        if let Some(vote) = vote {
+            post_entry.votes.push(VoteResponse {
+                id: vote.id,
+                post_id: vote.post_id,
+                member_id: vote.member_id,
+                vote_type: vote.vote_type,
+                created_at: vote.created_at.to_string(),
+                updated_at: vote.updated_at.to_string(),
+            });
+        }
+
+        if let Some(comment) = comment {
+            post_entry.comments.push(CommentResponse {
+                id: comment.id,
+                post_id: comment.post_id,
+                text: comment.text,
+                member_id: comment.member_id,
+                parent_comment_id: comment.parent_comment_id,
+                created_at: comment.created_at.to_string(),
+                updated_at: comment.updated_at.to_string(),
+            });
+        }
+    }
+
+    let posts: Vec<PostResponse> = posts_map.into_iter().map(|(_, post)| post).collect();
+
+    Ok(posts)
+}
+
+async fn list_posts(Extension(pool): Extension<Arc<DbPool>>, Query(params): Query<ListPostsQueryParams>) -> impl IntoResponse {
+    if params.sort.trim().is_empty() {
+        let error_message = json!({
+            "code": ApiErrors::ValidationError,
+            "message": "Required query parameter 'sort' is missing."
+        });
+        return build_response(StatusCode::BAD_REQUEST, None, Some(error_message));
+    }
+
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
+        Err(error) => {
+            tracing::error!("{}: Failed to get DB connection {}", ApiErrors::DatabaseError.to_string(), error);
+            let error_message = json!({ "code": ApiErrors::InternalServerError.to_string() });
+            return build_response(StatusCode::INTERNAL_SERVER_ERROR, None, Some(error_message));
+        }
+    };
+
+    match load_posts_with_votes_and_comments(&mut conn) {
+        Ok(items) => {
+            let body = json!(items);
+            build_response(StatusCode::OK, Some(body), None)
         }
         Err(error) => {
             tracing::error!("{}: Unexpected database error {}", ApiErrors::DatabaseError.to_string(), error);
